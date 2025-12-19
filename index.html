@@ -1,38 +1,200 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Ezinurse Admin Dashboard</title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ezinurse Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* CSS to make the iframe fill the entire viewport */
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* Prevents scrollbars on the main page */
-        }
-        #apps-script-embed {
-            /* Full screen size */
-            width: 100%;
-            height: 100%;
-            /* Removes the unnecessary border and ensures block display */
-            border: none;
-            display: block;
-        }
+        :root { --sidebar-bg: #0f172a; --accent: #3b82f6; }
+        body { background: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .sidebar { width: 260px; height: 100vh; background: var(--sidebar-bg); color: #fff; position: fixed; }
+        .main-content { margin-left: 260px; padding: 30px; }
+        .nav-link { color: #94a3b8; padding: 12px 20px; transition: 0.3s; }
+        .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.05); }
+        .card { border-radius: 10px; border: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .status-badge { font-size: 0.8rem; padding: 4px 10px; border-radius: 20px; }
+        #loginOverlay { background: white; position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <iframe
-        id="apps-script-embed"
-        src="https://script.google.com/macros/s/AKfycbx7LQOLg0H3oTy4be3rjJLTwsRGJ_AZuwGrIeE-pcx4evj52Wywz7Nn4BqBxn1PU2BHcg/exec"
-        loading="lazy"
-        allow="fullscreen"
-    >
-        Your browser does not support iframes. Please view the application directly.
-    </iframe>
-    
+<div id="loginOverlay">
+    <div class="card p-5 shadow-lg" style="width: 400px;">
+        <h3 class="text-center fw-bold mb-4">Ezi<span class="text-primary">nurse</span> Admin</h3>
+        <input type="email" id="admEmail" class="form-control mb-3" placeholder="Admin Email">
+        <input type="password" id="admPass" class="form-control mb-4" placeholder="Password">
+        <button onclick="login()" class="btn btn-primary w-100 py-2">Sign In</button>
+    </div>
+</div>
+
+<div class="sidebar d-flex flex-column">
+    <div class="p-4 border-bottom border-secondary mb-3">
+        <h4 class="m-0 fw-bold">EziAdmin</h4>
+    </div>
+    <nav class="nav flex-column">
+        <a class="nav-link active" href="#" onclick="showSection('searchSection')"><i class="fas fa-search me-3"></i>User Search</a>
+        <a class="nav-link" href="#" onclick="fetchSignups()"><i class="fas fa-user-plus me-3"></i>Recent Signups</a>
+        <a class="nav-link" href="#" onclick="fetchExpired()"><i class="fas fa-hourglass-end me-3"></i>Expired Courses</a>
+        <div class="mt-auto">
+            <a class="nav-link text-danger" href="#" onclick="location.reload()"><i class="fas fa-power-off me-3"></i>Logout</a>
+        </div>
+    </nav>
+</div>
+
+<div class="main-content">
+    <div id="searchSection">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Manage Users</h3>
+            <div class="d-flex w-50">
+                <input type="text" id="userQuery" class="form-control me-2" placeholder="Search by email...">
+                <button class="btn btn-primary px-4" onclick="findUser()">Search</button>
+            </div>
+        </div>
+
+        <div id="resultArea" style="display:none;">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card p-4 h-100">
+                        <h5 class="fw-bold mb-3">Profile Info</h5>
+                        <p><strong>Name:</strong> <span id="resName"></span></p>
+                        <p><strong>Email:</strong> <span id="resEmail"></span></p>
+                        <p><strong>Device ID:</strong> <span id="resDevice" class="badge bg-secondary"></span></p>
+                        <div class="mt-4">
+                            <button class="btn btn-sm btn-outline-danger w-100 mb-2" onclick="clearDevice()">Reset Device ID</button>
+                            <button class="btn btn-sm btn-outline-primary w-100" onclick="resetUserPass()">Reset Password</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card p-4">
+                        <h5 class="fw-bold mb-3">Course Access Matrix</h5>
+                        <div class="row g-2" id="courseGrid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4 p-4">
+                <h5 class="fw-bold mb-3">Add / Extend Course Access</h5>
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label>Select Course</label>
+                        <select id="courseSelect" class="form-select"></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Expiry Date</label>
+                        <input type="date" id="expiryInput" class="form-control">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-success w-100" onclick="grantAccess()">Update Access</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tableSection" style="display:none;">
+        <h3 id="tableTitle" class="mb-4">Data View</h3>
+        <div class="card p-0 overflow-hidden">
+            <table class="table table-hover mb-0">
+                <thead class="table-light" id="tHead"></thead>
+                <tbody id="tBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'YOUR_WEB_APP_URL_HERE';
+    let currentUserEmail = '';
+
+    async function login() {
+        const e = document.getElementById('admEmail').value;
+        const p = document.getElementById('admPass').value;
+        const res = await fetch(`${API_URL}?action=login&email=${e}&password=${p}`);
+        const data = await res.json();
+        if(data.success) document.getElementById('loginOverlay').style.display = 'none';
+        else alert('Invalid Admin Credentials');
+    }
+
+    async function findUser() {
+        const email = document.getElementById('userQuery').value;
+        const res = await fetch(`${API_URL}?action=getUser&email=${email}`);
+        const data = await res.json();
+        if(data.error) return alert(data.error);
+        
+        currentUserEmail = data.user.Email;
+        document.getElementById('resName').innerText = data.user.Name;
+        document.getElementById('resEmail').innerText = data.user.Email;
+        document.getElementById('resDevice').innerText = data.user.DeviceID || 'No Device';
+        
+        // Build Course Grid
+        let grid = '';
+        let options = '';
+        Object.keys(data.user).forEach(key => {
+            if(key.includes('_') || key === '3d_models') {
+                const isActive = data.user[key] === true;
+                grid += `<div class="col-md-4"><div class="p-2 border rounded ${isActive ? 'bg-success-subtle text-success' : 'text-muted'}">
+                    <small>${isActive ? '● Active' : '○ Inactive'}</small><br><strong>${key}</strong>
+                </div></div>`;
+                options += `<option value="${key}">${key}</option>`;
+            }
+        });
+        document.getElementById('courseGrid').innerHTML = grid;
+        document.getElementById('courseSelect').innerHTML = options;
+        document.getElementById('resultArea').style.display = 'block';
+        showSection('searchSection');
+    }
+
+    async function grantAccess() {
+        const payload = {
+            email: currentUserEmail,
+            name: document.getElementById('resName').innerText,
+            courseKey: document.getElementById('courseSelect').value,
+            expiry: document.getElementById('expiryInput').value
+        };
+        const res = await fetch(API_URL + '?action=updateUser', { method: 'POST', body: JSON.stringify(payload) });
+        const data = await res.json();
+        if(data.success) { alert('Access Granted Successfully'); findUser(); }
+    }
+
+    async function clearDevice() {
+        if(!confirm('Reset Device ID?')) return;
+        const res = await fetch(`${API_URL}?action=resetDevice&email=${currentUserEmail}`);
+        alert('Device Cleared');
+        findUser();
+    }
+
+    async function resetUserPass() {
+        const newPass = prompt('Enter new password:');
+        if(!newPass) return;
+        await fetch(`${API_URL}?action=resetPass&email=${currentUserEmail}&newPass=${newPass}`);
+        alert('Password Updated');
+    }
+
+    async function fetchSignups() {
+        const res = await fetch(API_URL + '?action=getRecent');
+        const data = await res.json();
+        document.getElementById('tableTitle').innerText = 'Recent Signups';
+        document.getElementById('tHead').innerHTML = '<tr><th>Name</th><th>Email</th><th>Reg Date</th></tr>';
+        document.getElementById('tBody').innerHTML = data.map(r => `<tr><td>${r.name}</td><td>${r.email}</td><td>${new Date(r.date).toLocaleDateString()}</td></tr>`).join('');
+        showSection('tableSection');
+    }
+
+    async function fetchExpired() {
+        const res = await fetch(API_URL + '?action=getExpired');
+        const data = await res.json();
+        document.getElementById('tableTitle').innerText = 'Expired Course Access';
+        document.getElementById('tHead').innerHTML = '<tr><th>Email</th><th>Course</th><th>Expiry Date</th></tr>';
+        document.getElementById('tBody').innerHTML = data.map(r => `<tr class="table-danger"><td>${r.email}</td><td>${r.course}</td><td>${new Date(r.expiry).toLocaleDateString()}</td></tr>`).join('');
+        showSection('tableSection');
+    }
+
+    function showSection(id) {
+        ['searchSection', 'tableSection'].forEach(s => document.getElementById(s).style.display = (s === id ? 'block' : 'none'));
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+</script>
 </body>
 </html>
