@@ -77,7 +77,7 @@
 
     <h1>Ezi Nurse Course Dashboard</h1>
 
-    <input type="hidden" id="https://script.google.com/macros/s/AKfycbwK-70soGTDxHUwH8XTAAbPzh5AhAU3pke12JJyrkqbQcax7ekPJB6T3qxQrNKwma0-/exec">
+    <input type="hidden" id="scriptUrl" value="https://script.google.com/macros/s/AKfycbzYW_X5SLY1-LBN6fpeYO-ZIkoLSHkg5Ce4VkQpF0wJl6UXv4t0vWjeUel6L4tHmOw2/exec">
 
     <div class="card">
         <h2 style="margin-top:0; color:var(--brand);">Subject Details</h2>
@@ -233,7 +233,6 @@
         function processUrlInput(input) {
             let url = input.trim();
             // 1. Extract src if it's an iframe or HTML tag
-            // Regex improved to handle single quotes, double quotes, or no quotes
             const srcMatch = url.match(/src=["']?([^"'\s>]+)["']?/);
             if (srcMatch && srcMatch[1]) {
                 url = srcMatch[1];
@@ -246,11 +245,9 @@
 
             // 3. Fix BioDigital
             else if (url.includes('human.biodigital.com')) {
-                // Handle /viewer/ -> /widget/ (common in full URLs)
                 if (url.includes('/viewer/')) {
                     url = url.replace('/viewer/', '/widget/');
                 } 
-                // Handle /view -> /widget (common in dashboard links)
                 else if (url.includes('/view')) {
                     url = url.replace('/view', '/widget');
                 }
@@ -264,7 +261,7 @@
         function startRelaySequence() {
             const scriptUrl = document.getElementById('scriptUrl').value;
             if(!scriptUrl) { 
-                showMessage("Server URL Missing. Please configure the relay URL.", "error");
+                showMessage("Server URL Missing. Please check the code configuration.", "error");
                 return; 
             }
 
@@ -321,11 +318,15 @@
         function sendUpdate() {
             const scriptUrl = document.getElementById('scriptUrl').value;
             
+            if(!scriptUrl) {
+               showMessage("Server URL Missing!", "error");
+               return;
+            }
+
             // 1. Gather raw data and Process URL
             const rawUrl = document.getElementById('updUrl').value;
             const cleanUrl = processUrlInput(rawUrl);
 
-            // Convert Unit to a clean format (remove non-numeric if desired, or keep as is)
             const rawUnit = document.getElementById('updUnit').value.trim();
 
             const updateData = {
@@ -350,15 +351,11 @@
             btn.disabled = true;
             btn.textContent = "Sending Update...";
 
-            console.log("Sending payload:", JSON.stringify(updateData));
-
-            // 4. Fetch with 'text/plain' to avoid CORS Preflight (OPTIONS) failure
+            // 4. Fetch
             fetch(scriptUrl, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 
-                    'Content-Type': 'text/plain' 
-                },
+                headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(updateData)
             })
             .then(() => {
@@ -573,7 +570,6 @@
             const payload = constructAppHTML();
             
             // SEND TO SERVER
-            // Note: Changed to text/plain here as well for consistency
             fetch(scriptUrl, {
                 method: 'POST',
                 mode: 'no-cors',
