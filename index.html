@@ -13,8 +13,8 @@
         .card { background: white; padding: 25px; margin-bottom: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; position: relative; }
         
         label { display: block; font-weight: 600; margin-top: 15px; margin-bottom: 5px; color: #4b5563; font-size: 0.9rem; }
-        input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-        input:focus, textarea:focus { outline: none; border-color: var(--brand); ring: 2px solid var(--brand); }
+        input[type="text"], textarea, select { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: white; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--brand); ring: 2px solid var(--brand); }
         
         .btn-action { cursor: pointer; padding: 10px 16px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
         .btn-add-unit { background: var(--brand); color: white; width: 100%; justify-content: center; font-size: 1.1rem; padding: 15px; }
@@ -25,7 +25,7 @@
         /* Notify Server Button */
         .btn-notify { background: #2563eb; color: white; flex: 2; font-size: 1.2rem; padding: 20px; font-weight: 700; cursor: pointer; border: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; }
         .btn-notify:hover { background: #1d4ed8; transform: translateY(-2px); }
-        .btn-notify:disabled { background: #4b5563; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-notify:disabled { background: #4b5563; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7; }
 
         /* Preview Button */
         .btn-preview { background: var(--accent); color: white; flex: 1; font-size: 1.2rem; padding: 20px; font-weight: 700; cursor: pointer; border: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; }
@@ -65,6 +65,10 @@
         .modal-body { flex: 1; background: #f3f4f6; position: relative; padding: 0; display:flex; justify-content:center; overflow: hidden;}
         .btn-close { background: var(--error); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
         .preview-iframe { width: 100%; height: 100%; border: none; background: white; }
+
+        /* Update Section Specific */
+        .update-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 600px) { .update-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -73,7 +77,7 @@
 
     <h1>Ezi Nurse Course Dashboard</h1>
 
-    <input type="hidden" id="scriptUrl" value="https://script.google.com/macros/s/AKfycbwu-PdzB4eFUnb9zXz1YwjMTo3tgYZFoieAyHHD_SfCfqhbZirofTlJCITeH49L6rqt/exec">
+    <input type="hidden" id="https://script.google.com/macros/s/AKfycbwe8BmqCS_E_-xLR-_6B-MfhiqK_spT78LPwdiYXh-fmmEGWaXdgsj_Yi7nKvXSGrvk/exec">
 
     <div class="card">
         <h2 style="margin-top:0; color:var(--brand);">Subject Details</h2>
@@ -88,13 +92,59 @@
     <button class="btn-action btn-add-unit" onclick="addUnit()">+ Add New Unit</button>
     
     <div class="action-bar">
-        <button id="notifyBtn" class="btn-notify" onclick="startRelaySequence()">📡 NOTIFY SERVER</button>
+        <button id="notifyBtn" class="btn-notify" onclick="startRelaySequence()">📡 NOTIFY SERVER (FULL COURSE)</button>
         <button class="btn-preview" onclick="previewApp()">👁 PREVIEW SUBJECT</button>
     </div>
 
+    <hr style="margin: 40px 0; border: none; border-top: 2px dashed #cbd5e1;">
+
+    <div class="card" style="border-top: 5px solid var(--accent);">
+        <h2 style="margin-top:0; color:var(--brand);">QUICK UPDATION</h2>
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">Use this form to push a single resource update/addition.</p>
+
+        <div class="update-grid">
+            <div>
+                <label>Semester / Year Name *</label>
+                <input type="text" id="updSemester" placeholder="e.g., Semester 1">
+            </div>
+            <div>
+                <label>Subject Title *</label>
+                <input type="text" id="updSubject" placeholder="e.g., Applied Anatomy">
+            </div>
+        </div>
+
+        <div class="update-grid">
+            <div>
+                <label>Unit Number</label>
+                <input type="text" id="updUnit" placeholder="e.g., 1">
+            </div>
+            <div>
+                <label>Topic Type</label>
+                <select id="updType">
+                    <option>📚 Detailed Note</option>
+                    <option>📝 Lecture Note</option>
+                    <option>🎥 Video</option>
+                    <option>🧊 3D Model</option>
+                    <option>🔥 Important Discussion</option>
+                    <option>📑 Important Questions PDF</option>
+                </select>
+            </div>
+        </div>
+
+        <label>Topic Title *</label>
+        <input type="text" id="updTopicTitle" placeholder="e.g., Structure of Heart">
+
+        <label>Resource URL *</label>
+        <input type="text" id="updUrl" placeholder="https://...">
+
+        <div class="action-bar" style="margin-top: 25px;">
+            <button id="updNotifyBtn" class="btn-notify" style="background:#059669;" onclick="sendUpdate()">📡 NOTIFY SERVER (UPDATE)</button>
+            <button class="btn-preview" style="background:#0d9488;" onclick="previewUpdate()">👁 PREVIEW URL</button>
+        </div>
+    </div>
     <div id="preview-modal" class="modal-overlay">
         <div class="modal-header">
-            <div style="font-weight:700; color:var(--brand); font-size: 1.2rem;">App Preview</div>
+            <div style="font-weight:700; color:var(--brand); font-size: 1.2rem;">Preview</div>
             <button class="btn-close" onclick="closePreview()">Close Preview</button>
         </div>
         <div class="modal-body">
@@ -179,6 +229,36 @@
 
         function removeUnit(id) { document.getElementById(`unit-${id}`).remove(); }
 
+        // --- HELPER: Process URL Input (Handles HTML pastes and Fixes Links) ---
+        function processUrlInput(input) {
+            let url = input.trim();
+            // 1. Extract src if it's an iframe or HTML tag
+            // Regex improved to handle single quotes, double quotes, or no quotes
+            const srcMatch = url.match(/src=["']?([^"'\s>]+)["']?/);
+            if (srcMatch && srcMatch[1]) {
+                url = srcMatch[1];
+            }
+
+            // 2. Fix Google Drive
+            if (url.includes('drive.google.com')) {
+                url = url.replace(/\/view.*/, '/preview').replace(/\/edit.*/, '/preview');
+            }
+
+            // 3. Fix BioDigital
+            else if (url.includes('human.biodigital.com')) {
+                // Handle /viewer/ -> /widget/ (common in full URLs)
+                if (url.includes('/viewer/')) {
+                    url = url.replace('/viewer/', '/widget/');
+                } 
+                // Handle /view -> /widget (common in dashboard links)
+                else if (url.includes('/view')) {
+                    url = url.replace('/view', '/widget');
+                }
+            }
+            
+            return url;
+        }
+
         // --- RELAY ANIMATION & LOGIC ---
 
         function startRelaySequence() {
@@ -221,6 +301,82 @@
             document.getElementById('preview-modal').style.display = 'none';
         }
 
+        // --- UPDATION SECTION LOGIC (FIXED) ---
+
+        function previewUpdate() {
+            const rawUrl = document.getElementById('updUrl').value;
+            if(!rawUrl) { showMessage("Please enter a URL to preview.", "error"); return; }
+            
+            const finalUrl = processUrlInput(rawUrl);
+
+            const modal = document.getElementById('preview-modal');
+            const iframe = document.getElementById('preview-frame');
+            iframe.removeAttribute('srcdoc'); // Clear previous doc content
+            iframe.src = finalUrl;
+            // Add allow attribute for BioDigital
+            iframe.allow = "xr-spatial-tracking";
+            modal.style.display = 'flex';
+        }
+
+        function sendUpdate() {
+            const scriptUrl = document.getElementById('scriptUrl').value;
+            
+            // 1. Gather raw data and Process URL
+            const rawUrl = document.getElementById('updUrl').value;
+            const cleanUrl = processUrlInput(rawUrl);
+
+            // Convert Unit to a clean format (remove non-numeric if desired, or keep as is)
+            const rawUnit = document.getElementById('updUnit').value.trim();
+
+            const updateData = {
+                type: 'SINGLE_UPDATE',
+                semester: document.getElementById('updSemester').value.trim(),
+                subject: document.getElementById('updSubject').value.trim(),
+                unit: rawUnit || "1", 
+                topicType: document.getElementById('updType').value,
+                topicTitle: document.getElementById('updTopicTitle').value.trim(),
+                url: cleanUrl
+            };
+
+            // 2. Validation
+            if(!updateData.semester || !updateData.subject || !updateData.url || !updateData.topicTitle) {
+                showMessage("Please fill in: Semester, Subject, Topic Title and URL.", "error");
+                return;
+            }
+
+            // 3. UI Feedback
+            const btn = document.getElementById('updNotifyBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Sending Update...";
+
+            console.log("Sending payload:", JSON.stringify(updateData));
+
+            // 4. Fetch with 'text/plain' to avoid CORS Preflight (OPTIONS) failure
+            fetch(scriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 
+                    'Content-Type': 'text/plain' 
+                },
+                body: JSON.stringify(updateData)
+            })
+            .then(() => {
+                showMessage("Update Sent Successfully!", "success");
+                btn.textContent = "✔ Sent!";
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }, 3000);
+            })
+            .catch(err => {
+                console.error(err);
+                showMessage("Update Failed: " + err.message, "error");
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+        }
+
         // --- CORE BUILD LOGIC ---
 
         function constructAppHTML() {
@@ -242,7 +398,10 @@
                 rows.forEach(row => {
                     const rType = row.dataset.type;
                     const rTitle = row.querySelector('.res-title').value || "Untitled Resource";
-                    const rLink = row.querySelector('.res-link').value || "#";
+                    let rLinkInput = row.querySelector('.res-link').value || "#";
+                    
+                    // Use common link processor
+                    const rLink = processUrlInput(rLinkInput);
                     
                     if(rType === 'detailed') {
                         resourcesHTML += `<div class="resource-btn notes" onclick="openResource('notes', '${rLink}', '${rTitle}')"><span class="icon">📚</span><span>${rTitle}</span></div>`;
@@ -253,10 +412,8 @@
                     } else if (rType === 'model') {
                         resourcesHTML += `<div class="resource-btn model" onclick="openResource('model', '${rLink}', '${rTitle}')"><span class="icon model-icon">🧊</span><span>${rTitle}</span></div>`;
                     } else if (rType === 'imp-discussion') {
-                        // FIRE SYMBOL + LIGHT RED BACKGROUND
                         resourcesHTML += `<div class="resource-btn imp-discussion" onclick="openResource('video', '${rLink}', '${rTitle}')"><span class="icon">🔥</span><span>${rTitle}</span></div>`;
                     } else if (rType === 'imp-pdf') {
-                        // NOTES ICON + LIGHT ORANGE BACKGROUND
                         resourcesHTML += `<div class="resource-btn imp-pdf" onclick="openResource('notes', '${rLink}', '${rTitle}')"><span class="icon">📑</span><span>${rTitle}</span></div>`;
                     }
                 });
@@ -362,9 +519,18 @@
             const body = document.getElementById('modal-body');
             document.getElementById('modal-title').textContent = title;
             modal.style.display = 'flex';
+            
+            // Clean URL Logic (Fallback/Runtime)
             let finalUrl = url;
-            if (url.includes('drive.google.com')) { finalUrl = url.replace(/\\/view.*/, '/preview').replace(/\\/edit.*/, '/preview'); }
-            body.innerHTML = '<iframe class="iframe-res" src="' + finalUrl + '" allowfullscreen></iframe>';
+            if (url.includes('drive.google.com')) { 
+                finalUrl = url.replace(/\\/view.*/, '/preview').replace(/\\/edit.*/, '/preview'); 
+            }
+            else if (url.includes('human.biodigital.com')) { 
+                 if (url.includes('/viewer/')) finalUrl = url.replace('/viewer/', '/widget/');
+                 else finalUrl = url.replace('/view', '/widget'); 
+            }
+            
+            body.innerHTML = '<iframe class="iframe-res" src="' + finalUrl + '" width="100%" height="100%" allow="xr-spatial-tracking" allowfullscreen></iframe>';
         }
         function startQuiz(unitId) {
             score = 0;
@@ -407,10 +573,11 @@
             const payload = constructAppHTML();
             
             // SEND TO SERVER
+            // Note: Changed to text/plain here as well for consistency
             fetch(scriptUrl, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'text/plain' }, 
                 body: JSON.stringify(payload)
             })
             .then(() => {
@@ -419,7 +586,7 @@
                 showMessage("Relay Successful! The data was sent successfully.", "success");
                 setTimeout(() => {
                     btn.disabled = false;
-                    btn.textContent = "📡 NOTIFY SERVER";
+                    btn.textContent = "📡 NOTIFY SERVER (FULL COURSE)";
                 }, 5000);
             })
             .catch(err => {
