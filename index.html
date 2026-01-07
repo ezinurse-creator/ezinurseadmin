@@ -2,205 +2,412 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ezinurse Admin Panel</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ezi Nurse Dashboard</title>
     <style>
-        :root { --sidebar: #0f172a; --primary: #2563eb; }
-        body { background: #f1f5f9; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .sidebar { width: 280px; height: 100vh; background: var(--sidebar); color: white; position: fixed; }
-        .content { margin-left: 280px; padding: 40px; }
-        .nav-link { color: #94a3b8; padding: 12px 25px; border-left: 4px solid transparent; cursor: pointer; text-decoration: none; display: block; }
-        .nav-link.active { background: #1e293b; color: white; border-left-color: var(--primary); }
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        .course-card { padding: 15px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px; background: white; }
-        #loginBox { position: fixed; inset: 0; background: #f8fafc; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .pass-eye { cursor: pointer; position: absolute; right: 15px; top: 38px; color: #64748b; }
-        .hidden { display: none !important; }
+        :root { --brand: #003B82; --accent: #00B9F2; --light: #f3f4f6; --error: #ef4444; --success: #10b981; }
+        body { font-family: 'Segoe UI', sans-serif; padding: 40px; background: #eef2f6; max-width: 900px; margin: 0 auto; color: #333; }
+        
+        h1 { color: var(--brand); text-align: center; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .card { background: white; padding: 25px; margin-bottom: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; position: relative; }
+        
+        label { display: block; font-weight: 600; margin-top: 15px; margin-bottom: 5px; color: #4b5563; font-size: 0.9rem; }
+        input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        input:focus, textarea:focus { outline: none; border-color: var(--brand); ring: 2px solid var(--brand); }
+        
+        .btn-action { cursor: pointer; padding: 10px 16px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-add-unit { background: var(--brand); color: white; width: 100%; justify-content: center; font-size: 1.1rem; padding: 15px; }
+        
+        /* Buttons Container */
+        .action-bar { display: flex; gap: 15px; margin-top: 40px; }
+
+        /* Notify Server Button */
+        .btn-notify { background: #2563eb; color: white; flex: 2; font-size: 1.2rem; padding: 20px; font-weight: 700; cursor: pointer; border: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; }
+        .btn-notify:hover { background: #1d4ed8; transform: translateY(-2px); }
+        .btn-notify:disabled { background: #4b5563; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Preview Button */
+        .btn-preview { background: var(--accent); color: white; flex: 1; font-size: 1.2rem; padding: 20px; font-weight: 700; cursor: pointer; border: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; }
+        .btn-preview:hover { background: #0ea5e9; transform: translateY(-2px); }
+
+        .res-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+        .btn-outline { background: white; border: 1px solid #d1d5db; color: #374151; }
+        .btn-outline:hover { background: #f9fafb; border-color: #9ca3af; }
+        
+        .resource-row { display: flex; gap: 10px; margin-top: 10px; align-items: center; background: #f9fafb; padding: 10px; border-radius: 6px; }
+        .type-tag { font-size: 0.8rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; min-width: 90px; text-align: center; }
+        
+        .tag-video { background: #ede9fe; color: #5b21b6; }
+        .tag-detailed { background: #e0f2fe; color: #075985; }
+        .tag-lecture { background: #dbeafe; color: #1e40af; }
+        .tag-model { background: #fce7f3; color: #9d174d; }
+        
+        .quiz-area { margin-top: 15px; background: #fffbeb; padding: 15px; border-radius: 8px; border: 1px solid #fcd34d; }
+        .btn-remove { position: absolute; top: 20px; right: 20px; background: #fee2e2; color: #991b1b; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; border: none; cursor: pointer; }
+
+        /* Status Toast */
+        #statusMessage {
+            position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 8px; color: white;
+            font-weight: 600; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .status-error { background: var(--error); }
+        .status-success { background: var(--success); }
+
+        /* Preview Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; display: none; flex-direction: column; }
+        .modal-header { height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+        .modal-body { flex: 1; background: #f3f4f6; position: relative; padding: 0; display:flex; justify-content:center; overflow: hidden;}
+        .btn-close { background: var(--error); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .preview-iframe { width: 100%; height: 100%; border: none; background: white; }
     </style>
 </head>
-<body onload="checkSession()">
+<body>
 
-<div id="loginBox">
-    <div class="card p-5 shadow-lg" style="width: 420px;">
-        <div class="text-center mb-4">
-            <h2 class="fw-bold m-0 text-dark">Ezi<span class="text-primary">nurse</span></h2>
-            <p class="text-muted small">Admin Panel Login</p>
-        </div>
-        <div class="mb-3"><label class="small fw-bold">EMAIL</label><input type="email" id="admE" class="form-control" placeholder="Admin Email"></div>
-        <div class="mb-4 position-relative"><label class="small fw-bold">PASSWORD</label><input type="password" id="admP" class="form-control"><i class="fas fa-eye pass-eye" onclick="toggleP()"></i></div>
-        <button onclick="doLogin()" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">Sign In</button>
-    </div>
-</div>
+    <div id="statusMessage"></div>
 
-<div id="mainDashboard" class="hidden">
-    <div class="sidebar d-flex flex-column">
-        <div class="p-4 border-bottom border-secondary mb-3"><h4 class="fw-bold m-0 text-white">Ezi Nurse Admin Panel</h4></div>
-        <nav class="nav flex-column">
-            <a class="nav-link active" id="nav-search" onclick="showSection('searchS')"><i class="fas fa-search me-3"></i>User Management</a>
-            <a class="nav-link" id="nav-analytics" onclick="loadAnalytics()"><i class="fas fa-chart-bar me-3"></i>Course Analytics</a>
-            <a class="nav-link" id="nav-signups" onclick="loadSignups()"><i class="fas fa-users me-3"></i>Recent Signups</a>
-            <a class="nav-link" id="nav-expired" onclick="loadExpired()"><i class="fas fa-user-clock me-3"></i>Expired Access</a>
-            <a class="nav-link text-danger mt-auto" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-3"></i>Logout</a>
-        </nav>
+    <h1>Ezi Nurse Course Dashboard</h1>
+
+    <!-- Hidden Configuration for Server Relay -->
+    <input type="hidden" id="scriptUrl" value="https://script.google.com/macros/s/AKfycbwu-PdzB4eFUnb9zXz1YwjMTo3tgYZFoieAyHHD_SfCfqhbZirofTlJCITeH49L6rqt/exec">
+
+    <div class="card">
+        <h2 style="margin-top:0; color:var(--brand);">Subject Details</h2>
+        <label>Subject Name</label>
+        <input type="text" id="courseName" placeholder="e.g., Applied Anatomy" value="Applied Anatomy">
+        <label>Syllabus Link (Google Drive)</label>
+        <input type="text" id="syllabusLink" placeholder="">
     </div>
 
-    <div class="content">
-        <div id="searchS">
-            <div class="d-flex justify-content-between align-items-center mb-5">
-                <h3>User Directory</h3>
-                <div class="d-flex w-50 shadow-sm"><input type="text" id="q" class="form-control me-2" placeholder="Search user email..."><button class="btn btn-primary px-4" onclick="search()">Search</button></div>
-            </div>
-            <div id="profile" style="display:none;">
-                <div class="row g-4">
-                    <div class="col-md-4">
-                        <div class="card p-4 h-100 shadow-sm border-top border-primary border-4">
-                            <h5 id="pName" class="fw-bold mb-1"></h5>
-                            <p id="pEmail" class="text-muted small mb-4"></p>
-                            <div class="bg-light p-3 rounded mb-4">
-                                <p class="small mb-2"><b>Registered:</b> <span id="pReg" class="float-end"></span></p>
-                                <p class="small mb-2"><b>Last Login:</b> <span id="pLog" class="float-end"></span></p>
-                                <p class="small mb-0"><b>Device ID:</b> <span id="pDev" class="text-truncate d-inline-block" style="max-width: 100px;"></span></p>
-                            </div>
-                            <button class="btn btn-outline-danger btn-sm w-100 mb-2" onclick="resetD()">Reset Device Lock</button>
-                            <button class="btn btn-outline-primary btn-sm w-100" onclick="resetP()">Change Password</button>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="card p-4 shadow-sm">
-                            <h5 class="fw-bold mb-4">Manage Course Access</h5>
-                            <div class="row g-2" id="cGrid"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div id="unitsContainer"></div>
 
-        <div id="tableS" style="display:none;">
-            <h3 id="tTitle" class="mb-4 text-dark fw-bold">Data Management</h3>
-            <div class="card p-0 shadow-sm overflow-hidden"><table class="table table-hover align-middle mb-0"><thead class="table-light py-3" id="tH"></thead><tbody id="tB"></tbody></table></div>
+    <button class="btn-action btn-add-unit" onclick="addUnit()">+ Add New Unit</button>
+    
+    <div class="action-bar">
+        <button id="notifyBtn" class="btn-notify" onclick="startRelaySequence()">📡 NOTIFY SERVER</button>
+        <button class="btn-preview" onclick="previewApp()">👁 PREVIEW SUBJECT</button>
+    </div>
+
+    <!-- Preview Modal DOM -->
+    <div id="preview-modal" class="modal-overlay">
+        <div class="modal-header">
+            <div style="font-weight:700; color:var(--brand); font-size: 1.2rem;">App Preview</div>
+            <button class="btn-close" onclick="closePreview()">Close Preview</button>
+        </div>
+        <div class="modal-body">
+            <iframe id="preview-frame" class="preview-iframe"></iframe>
         </div>
     </div>
-</div>
 
-<div class="modal fade" id="expM" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg">
-            <div class="modal-header"><h5 class="fw-bold">Set Course Expiry</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body"><label class="small fw-bold mb-2">PICK DATE</label><input type="date" id="expD" class="form-control"></div>
-            <div class="modal-footer"><button class="btn btn-primary w-100 py-2" onclick="saveAccess()">Grant/Update Access</button></div>
-        </div>
-    </div>
-</div>
+    <script>
+        let unitCounter = 0;
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    const API = 'https://script.google.com/macros/s/AKfycbzNDwLb_ocX7t183vh9XrqowByFqFHRrUDi6wUFDtHjXN3hWbrk7xd0GCzM7SL-OfLROA/exec';
-    let currUser = null, currCourse = null;
-    const expM = new bootstrap.Modal(document.getElementById('expM'));
-
-    function toggleP() { const p = document.getElementById('admP'); p.type = p.type === 'password' ? 'text' : 'password'; }
-
-    // Session logic
-    function checkSession() {
-        const session = localStorage.getItem('ezi_admin_session');
-        if (session === 'active') {
-            document.getElementById('loginBox').classList.add('hidden');
-            document.getElementById('mainDashboard').classList.remove('hidden');
+        // Custom function to replace alerts
+        function showMessage(msg, type = 'error') {
+            const el = document.getElementById('statusMessage');
+            el.textContent = msg;
+            el.className = type === 'error' ? 'status-error' : 'status-success';
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 4000);
         }
-    }
 
-    async function call(p, m='GET', b=null) {
-        const u = new URL(API); Object.keys(p).forEach(k => u.searchParams.append(k, p[k]));
-        const r = await fetch(u, { method: m, body: b ? JSON.stringify(b) : null });
-        return r.json();
-    }
+        // Initialize with one unit for demonstration
+        window.onload = function() {
+            addUnit();
+        };
 
-    async function doLogin() {
-        const res = await call({ action: 'login', email: document.getElementById('admE').value, password: document.getElementById('admP').value });
-        if(res.success) {
-            localStorage.setItem('ezi_admin_session', 'active');
-            document.getElementById('loginBox').classList.add('hidden');
-            document.getElementById('mainDashboard').classList.remove('hidden');
-        } else alert('Access Denied');
-    }
+        function addUnit() {
+            unitCounter++;
+            const div = document.createElement('div');
+            div.className = 'card unit-card';
+            div.id = `unit-${unitCounter}`;
+            div.innerHTML = `
+                <button class="btn-remove" onclick="removeUnit('${unitCounter}')">Remove Unit</button>
+                <h3 style="margin:0 0 15px 0; color:#374151;">Unit ${unitCounter}</h3>
+                
+                <label>Unit Title</label>
+                <input type="text" class="u-title" placeholder="">
 
-    function logout() {
-        localStorage.removeItem('ezi_admin_session');
-        location.reload();
-    }
+                <div id="resources-${unitCounter}"></div>
 
-    async function search() {
-        const res = await call({ action: 'getUser', email: document.getElementById('q').value });
-        if(res.error) return alert(res.error);
-        currUser = res.user;
-        document.getElementById('pName').innerText = currUser.Name;
-        document.getElementById('pEmail').innerText = currUser.Email;
-        document.getElementById('pReg').innerText = new Date(currUser['Registration Date']).toLocaleDateString();
-        document.getElementById('pLog').innerText = currUser['Last Login'] ? new Date(currUser['Last Login']).toLocaleString() : 'Never';
-        document.getElementById('pDev').innerText = currUser.DeviceID || 'No Link';
-        
-        const grid = Object.keys(currUser).filter(k => k.includes('_') || k === '3d_models').map(k => {
-            const active = currUser[k] === true || currUser[k] === "true";
-            const exp = res.expiries[k] ? new Date(res.expiries[k]).toLocaleDateString() : 'No Data';
-            return `<div class="col-md-6"><div class="course-card ${active ? 'border-primary' : ''}">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div><span class="small fw-bold text-uppercase d-block">${k.replace(/_/g,' ')}</span>
-                    <small class="text-muted">${active ? 'Expires: '+exp : 'Inactive'}</small></div>
-                    <div class="d-flex">
-                        ${active ? `<button class="btn btn-sm btn-outline-primary me-1" onclick="openExp('${k}')" title="Change Expiry"><i class="fas fa-calendar"></i></button>
-                                   <button class="btn btn-sm btn-outline-danger" onclick="update('${k}', false)" title="Revoke Access"><i class="fas fa-user-slash"></i></button>` : 
-                        `<button class="btn btn-sm btn-success px-3 fw-bold" onclick="openExp('${k}')">Grant</button>`}
-                    </div>
+                <div class="res-toolbar">
+                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'detailed')">📚 Add Detailed Note</button>
+                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'lecture')">📝 Add Lecture Note</button>
+                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'video')">🎥 Add Video</button>
+                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'model')">🧊 Add 3D Model</button>
                 </div>
-            </div></div>`;
-        }).join('');
-        document.getElementById('cGrid').innerHTML = grid;
-        document.getElementById('profile').style.display = 'block';
-    }
 
-    function openExp(c) { currCourse = c; expM.show(); }
-    async function saveAccess() { await update(currCourse, true, document.getElementById('expD').value); expM.hide(); }
+                <div class="quiz-area">
+                    <label style="margin-top:0;">Quiz Questions (Bulk Paste)</label>
+                    <div style="font-size:0.85rem; color:#92400e; margin-bottom:8px;">
+                        <strong>Format:</strong> Question | Opt1 | Opt2 | Opt3 | Opt4 | CorrectAnswer(1-4)
+                    </div>
+                    <textarea class="u-quiz-data" rows="5" placeholder="Powerhouse of cell? | Nucleus | Mitochondria | Ribosome | Wall | 2"></textarea>
+                </div>
+            `;
+            document.getElementById('unitsContainer').appendChild(div);
+        }
 
-    async function update(c, s, e='') {
-        await call({ action: 'updateAccess' }, 'POST', { email: currUser.Email, courseKey: c, status: s, expiry: e });
-        search();
-    }
+        function addResource(uId, type) {
+            const container = document.getElementById(`resources-${uId}`);
+            const div = document.createElement('div');
+            div.className = 'resource-row';
+            div.dataset.type = type;
+            
+            let labelText = type.charAt(0).toUpperCase() + type.slice(1);
+            if(type === 'detailed') labelText = "Detailed Note";
+            if(type === 'lecture') labelText = "Lecture Note";
+            
+            const placeholder = type === 'model' ? '' : '';
 
-    async function loadAnalytics() {
-        const res = await call({ action: 'getAnalytics' });
-        document.getElementById('tTitle').innerText = 'Student Distribution (All Time)';
-        document.getElementById('tH').innerHTML = '<tr><th class="ps-4">COURSE MODULE</th><th>TOTAL ACTIVE STUDENTS</th></tr>';
-        document.getElementById('tB').innerHTML = Object.keys(res).map(k => `<tr><td class="ps-4 fw-bold text-uppercase">${k.replace(/_/g,' ')}</td><td><span class="badge rounded-pill bg-primary px-3">${res[k]} Students</span></td></tr>`).join('');
-        showSection('tableS', 'nav-analytics');
-    }
+            div.innerHTML = `
+                <span class="type-tag tag-${type}">${labelText}</span>
+                <input type="text" class="res-title" placeholder="Title" style="flex:1;">
+                <input type="text" class="res-link" placeholder="${placeholder}" style="flex:2;">
+                <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">❌</button>
+            `;
+            container.appendChild(div);
+        }
 
-    async function loadSignups() {
-        const res = await call({ action: 'getRecent' });
-        document.getElementById('tTitle').innerText = 'Recent Registration Feed';
-        document.getElementById('tH').innerHTML = '<tr><th class="ps-4">NAME</th><th>EMAIL</th><th>REGISTERED</th><th>LAST LOGIN</th></tr>';
-        document.getElementById('tB').innerHTML = res.map(r => `<tr><td class="ps-4 fw-bold">${r.name}</td><td>${r.email}</td><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.lastLogin ? new Date(r.lastLogin).toLocaleString() : 'Never'}</td></tr>`).join('');
-        showSection('tableS', 'nav-signups');
-    }
+        function removeUnit(id) { document.getElementById(`unit-${id}`).remove(); }
 
-    async function loadExpired() {
-        const res = await call({ action: 'getExpired' });
-        document.getElementById('tTitle').innerText = 'System Alerts: Expired Users';
-        document.getElementById('tH').innerHTML = '<tr><th class="ps-4">USER EMAIL</th><th>COURSE</th><th>EXPIRED ON</th></tr>';
-        document.getElementById('tB').innerHTML = res.map(r => `<tr class="table-danger border-white"><td class="ps-4 fw-bold">${r.email}</td><td>${r.course.toUpperCase()}</td><td>${new Date(r.expiry).toLocaleDateString()}</td></tr>`).join('');
-        showSection('tableS', 'nav-expired');
-    }
+        // --- RELAY ANIMATION & LOGIC ---
 
-    async function resetD() { if(confirm('Erase Hardware ID?')) { await call({ action: 'resetDevice', email: currUser.Email }); search(); } }
-    async function resetP() { const p = prompt('Set New Password:'); if(p) { await call({ action: 'resetPass', email: currUser.Email, newPass: p }); search(); } }
+        function startRelaySequence() {
+            const scriptUrl = document.getElementById('scriptUrl').value;
+            if(!scriptUrl) { 
+                showMessage("Server URL Missing. Please configure the relay URL.", "error");
+                return; 
+            }
 
-    function showSection(s, navId) { 
-        document.getElementById('searchS').style.display = s === 'searchS' ? 'block' : 'none';
-        document.getElementById('tableS').style.display = s === 'tableS' ? 'block' : 'none';
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        if(navId) document.getElementById(navId).classList.add('active');
-        else document.getElementById('nav-search').classList.add('active');
-    }
-</script>
+            const btn = document.getElementById('notifyBtn');
+            btn.disabled = true;
+
+            let stage = 1;
+            btn.textContent = `Connecting to relay of Abinaya (${stage}/5)...`;
+
+            const relayTimer = setInterval(() => {
+                stage++;
+                if (stage <= 5) {
+                    btn.textContent = `Connecting to relay of Abinaya (${stage}/5)...`;
+                } else {
+                    clearInterval(relayTimer);
+                    btn.textContent = "Data Link Established. Sending...";
+                    executePayloadTransfer(); // Proceed to send
+                }
+            }, 500);
+        }
+
+        // --- PREVIEW LOGIC ---
+
+        function previewApp() {
+            const payload = constructAppHTML();
+            const modal = document.getElementById('preview-modal');
+            const iframe = document.getElementById('preview-frame');
+            
+            iframe.srcdoc = payload.html;
+            modal.style.display = 'flex';
+        }
+
+        function closePreview() {
+            document.getElementById('preview-modal').style.display = 'none';
+        }
+
+        // --- CORE BUILD LOGIC ---
+
+        function constructAppHTML() {
+            const courseName = document.getElementById('courseName').value || "My Course";
+            const syllabusLink = document.getElementById('syllabusLink').value || "#";
+            const units = document.getElementsByClassName('unit-card');
+            
+            let unitsHTML = '';
+            let quizDataObj = {};
+
+            // HTML GENERATION LOGIC
+            Array.from(units).forEach((unit, index) => {
+                const uNum = index + 1;
+                const title = unit.querySelector('.u-title').value || `Unit ${uNum}`;
+                
+                // Build Resources
+                let resourcesHTML = '';
+                const rows = unit.querySelectorAll('.resource-row');
+                rows.forEach(row => {
+                    const rType = row.dataset.type;
+                    const rTitle = row.querySelector('.res-title').value || "Untitled Resource";
+                    const rLink = row.querySelector('.res-link').value || "#";
+                    
+                    if(rType === 'detailed') {
+                        resourcesHTML += `<div class="resource-btn notes" onclick="openResource('notes', '${rLink}', '${rTitle}')"><span class="icon">📚</span><span>${rTitle}</span></div>`;
+                    } else if (rType === 'lecture') {
+                        resourcesHTML += `<div class="resource-btn notes" onclick="openResource('notes', '${rLink}', '${rTitle}')"><span class="icon">📝</span><span>${rTitle}</span></div>`;
+                    } else if (rType === 'video') {
+                        resourcesHTML += `<div class="resource-btn video" onclick="openResource('video', '${rLink}', '${rTitle}')"><span class="icon video-icon">▶️</span><span>${rTitle}</span></div>`;
+                    } else if (rType === 'model') {
+                        resourcesHTML += `<div class="resource-btn model" onclick="openResource('model', '${rLink}', '${rTitle}')"><span class="icon model-icon">🧊</span><span>${rTitle}</span></div>`;
+                    }
+                });
+
+                // Parse Quiz
+                const rawQuiz = unit.querySelector('.u-quiz-data').value.trim();
+                let parsedQuestions = [];
+                if(rawQuiz) {
+                    rawQuiz.split('\n').forEach(line => {
+                        if(line.trim() === '') return;
+                        const parts = line.split('|').map(p => p.trim());
+                        if(parts.length >= 6) {
+                            parsedQuestions.push({ q: parts[0], o: [parts[1], parts[2], parts[3], parts[4]], a: parseInt(parts[5]) - 1 });
+                        }
+                    });
+                }
+                quizDataObj[uNum] = parsedQuestions;
+
+                if(parsedQuestions.length > 0) {
+                    resourcesHTML += `<div class="resource-btn quiz" onclick="startQuiz(${uNum})"><span class="icon quiz-icon">✍️</span><span>Take Unit ${uNum} Quiz</span></div>`;
+                }
+
+                unitsHTML += `
+                <div class="unit-container">
+                    <div class="unit-header" role="button" aria-expanded="false" onclick="toggleUnit(this)">
+                        UNIT ${uNum} - ${title.toUpperCase()} <span>🔽</span>
+                    </div>
+                    <div class="unit-content"><div class="subsection">${resourcesHTML}</div></div>
+                </div>`;
+            });
+
+            // The Payload Template
+            const finalHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${courseName}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --brand: #003B82; --accent: #00B9F2; --gray-50: #f9fafb; --gray-200: #e5e7eb; --gray-900: #111827;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: white; color: var(--gray-900); padding: 24px; max-width: 1000px; margin: 0 auto; }
+        .syllabus-btn { display: block; width: 100%; padding: 18px 24px; margin: 12px 0; background: white; color: var(--brand); border: 2px solid var(--brand); font-weight: 700; font-size: 16px; text-align: center; cursor: pointer; border-radius: 12px; transition: all 0.2s ease; text-decoration: none; }
+        .syllabus-btn:hover { background: var(--gray-50); transform: translateY(-1px); }
+        .unit-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 18px 24px; margin: 16px 0; background: var(--brand); color: white; font-weight: 600; font-size: 16px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        .unit-header:hover { background: #002d63; }
+        .unit-content { padding: 0 12px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease; }
+        .unit-content.active { padding: 24px 12px; max-height: none; }
+        .subsection { padding: 20px; background: white; border-radius: 12px; border: 1px solid var(--gray-200); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .resource-btn { display: flex; width: 100%; padding: 14px 18px; margin: 6px 0; background: var(--gray-50); border-radius: 8px; font-weight: 500; border: 1px solid var(--gray-200); cursor: pointer; gap: 12px; transition: 0.2s; align-items: center; }
+        .resource-btn.notes { background: #f0f9ff; border-color: #bae6fd; color: #085d8c; }
+        .resource-btn.video { background: #f5f3ff; border-color: #d8b4fe; color: #5a32a6; }
+        .resource-btn.quiz { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+        .resource-btn.model { background: #fdf4ff; border-color: #f0abfc; color: #86198f; }
+        .resource-btn:hover { transform: translateY(-1px); filter: brightness(0.98); }
+        .icon { font-size: 1.3rem; min-width: 24px; color: var(--accent); }
+        .icon.video-icon { color: #8b5cf6; } .icon.quiz-icon { color: #f59e0b; } .icon.model-icon { color: #d946ef; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; flex-direction: column; }
+        .modal-header { height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+        .btn-close { background: var(--danger); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .modal-body { flex: 1; background: #f3f4f6; position: relative; padding: 20px; display:flex; justify-content:center; overflow-y: auto;}
+        .iframe-res { width: 100%; height: 100%; border: none; background: white; }
+        .quiz-container { background: white; width: 100%; max-width: 800px; padding: 30px; border-radius: 12px; margin-bottom: 50px; }
+        .quiz-option { padding: 12px 15px; border: 2px solid var(--gray-200); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        .quiz-option:hover { background: #f9fafb; border-color: var(--brand); }
+        .quiz-option.correct { background: #d1fae5; border-color: var(--success); color: #065f46; }
+        .quiz-option.wrong { background: #fee2e2; border-color: var(--danger); color: #991b1b; }
+        .btn-quiz { background: var(--brand); color: white; width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin-top: 20px; cursor: pointer;}
+        @media (max-width: 768px) { body { padding: 16px; } .quiz-container { padding: 15px; } }
+    </style>
+</head>
+<body>
+    <a class="syllabus-btn" href="${syllabusLink}" target="_blank">📄 DOWNLOAD SYLLABUS</a>
+    <div id="units">${unitsHTML}</div>
+    <div id="app-modal" class="modal-overlay">
+        <div class="modal-header">
+            <div id="modal-title" style="font-weight:700; color:var(--brand);">Resource</div>
+            <button class="btn-close" onclick="closeModal()">Close X</button>
+        </div>
+        <div id="modal-body" class="modal-body"></div>
+    </div>
+    <script>
+        const QUIZ_DATA = ${JSON.stringify(quizDataObj)};
+        let score = 0;
+        function toggleUnit(header) {
+            const content = header.nextElementSibling;
+            header.setAttribute('aria-expanded', header.getAttribute('aria-expanded') !== 'true');
+            content.classList.toggle('active');
+        }
+        function openResource(type, url, title) {
+            const modal = document.getElementById('app-modal');
+            const body = document.getElementById('modal-body');
+            document.getElementById('modal-title').textContent = title;
+            modal.style.display = 'flex';
+            let finalUrl = url;
+            if (url.includes('drive.google.com')) { finalUrl = url.replace(/\\/view.*/, '/preview').replace(/\\/edit.*/, '/preview'); }
+            body.innerHTML = '<iframe class="iframe-res" src="' + finalUrl + '" allowfullscreen></iframe>';
+        }
+        function startQuiz(unitId) {
+            score = 0;
+            const questions = QUIZ_DATA[unitId];
+            if(!questions || questions.length === 0) { alert('No questions found.'); return; }
+            let html = '<div class="quiz-container"><h2 style="color:var(--brand); margin-top:0;">Unit ' + unitId + ' Quiz</h2>';
+            html += '<div id="score-display" style="background:var(--brand); color:white; padding:5px 15px; border-radius:20px; display:inline-block; font-weight:700; margin-bottom:20px;">Score: 0 / ' + questions.length + '</div>';
+            questions.forEach((q, index) => {
+                html += '<div style="margin-bottom:30px; border-bottom:1px solid #eee; padding-bottom:20px;">';
+                html += '<p style="font-weight:600; font-size:1.1rem; margin-bottom:15px;">' + (index + 1) + '. ' + q.q + '</p>';
+                q.o.forEach((opt, optIndex) => {
+                    html += '<div class="quiz-option" onclick="checkAnswer(this, ' + unitId + ', ' + optIndex + ', ' + q.a + ')">' + opt + '</div>';
+                });
+                html += '</div>';
+            });
+            html += '<button class="btn-quiz" onclick="closeModal()">Close Quiz</button></div>';
+            document.getElementById('modal-body').innerHTML = html;
+            document.getElementById('modal-title').textContent = 'Unit ' + unitId + ' Quiz';
+            document.getElementById('app-modal').style.display = 'flex';
+        }
+        function checkAnswer(element, unitId, selectedIndex, correctIndex) {
+            if (element.parentElement.querySelector('.correct') || element.parentElement.querySelector('.wrong')) return;
+            if (selectedIndex === correctIndex) {
+                element.classList.add('correct'); score++;
+            } else {
+                element.classList.add('wrong'); element.parentElement.children[correctIndex + 1].classList.add('correct');
+            }
+            document.getElementById('score-display').textContent = 'Score: ' + score + ' / ' + QUIZ_DATA[unitId].length;
+        }
+        function closeModal() { document.getElementById('app-modal').style.display = 'none'; document.getElementById('modal-body').innerHTML = ""; }
+    <\/script>
+</body>
+</html>`;
+
+            return { html: finalHTML, courseName: courseName };
+        }
+
+        function executePayloadTransfer() {
+            const scriptUrl = document.getElementById('scriptUrl').value;
+            const payload = constructAppHTML();
+            
+            // SEND TO SERVER
+            fetch(scriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                const btn = document.getElementById('notifyBtn');
+                btn.textContent = "✔ Relay Successful! Check Inbox.";
+                showMessage("Relay Successful! The data was sent successfully.", "success");
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = "📡 NOTIFY SERVER";
+                }, 5000);
+            })
+            .catch(err => {
+                showMessage("Server Connection Failed: " + err, "error");
+                document.getElementById('notifyBtn').disabled = false;
+            });
+        }
+    </script>
 </body>
 </html>
