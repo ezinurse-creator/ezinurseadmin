@@ -36,12 +36,15 @@
         .btn-outline:hover { background: #f9fafb; border-color: #9ca3af; }
         
         .resource-row { display: flex; gap: 10px; margin-top: 10px; align-items: center; background: #f9fafb; padding: 10px; border-radius: 6px; }
-        .type-tag { font-size: 0.8rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; min-width: 90px; text-align: center; }
+        .type-tag { font-size: 0.8rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; min-width: 110px; text-align: center; }
         
+        /* Dashboard Tags Colors */
         .tag-video { background: #ede9fe; color: #5b21b6; }
         .tag-detailed { background: #e0f2fe; color: #075985; }
         .tag-lecture { background: #dbeafe; color: #1e40af; }
         .tag-model { background: #fce7f3; color: #9d174d; }
+        .tag-imp-discussion { background: #fee2e2; color: #991b1b; } /* Red for Discussion */
+        .tag-imp-pdf { background: #ffedd5; color: #9a3412; } /* Orange for Imp PDF */
         
         .quiz-area { margin-top: 15px; background: #fffbeb; padding: 15px; border-radius: 8px; border: 1px solid #fcd34d; }
         .btn-remove { position: absolute; top: 20px; right: 20px; background: #fee2e2; color: #991b1b; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; border: none; cursor: pointer; }
@@ -70,7 +73,6 @@
 
     <h1>Ezi Nurse Course Dashboard</h1>
 
-    <!-- Hidden Configuration for Server Relay -->
     <input type="hidden" id="scriptUrl" value="https://script.google.com/macros/s/AKfycbwu-PdzB4eFUnb9zXz1YwjMTo3tgYZFoieAyHHD_SfCfqhbZirofTlJCITeH49L6rqt/exec">
 
     <div class="card">
@@ -90,7 +92,6 @@
         <button class="btn-preview" onclick="previewApp()">👁 PREVIEW SUBJECT</button>
     </div>
 
-    <!-- Preview Modal DOM -->
     <div id="preview-modal" class="modal-overlay">
         <div class="modal-header">
             <div style="font-weight:700; color:var(--brand); font-size: 1.2rem;">App Preview</div>
@@ -133,10 +134,13 @@
                 <div id="resources-${unitCounter}"></div>
 
                 <div class="res-toolbar">
-                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'detailed')">📚 Add Detailed Note</button>
-                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'lecture')">📝 Add Lecture Note</button>
-                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'video')">🎥 Add Video</button>
-                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'model')">🧊 Add 3D Model</button>
+                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'detailed')">📚 Detailed Note</button>
+                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'lecture')">📝 Lecture Note</button>
+                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'video')">🎥 Video</button>
+                    <button class="btn-action btn-outline" onclick="addResource('${unitCounter}', 'model')">🧊 3D Model</button>
+                    
+                    <button class="btn-action btn-outline" style="border-color:#fca5a5; color:#991b1b;" onclick="addResource('${unitCounter}', 'imp-discussion')">🔥 Important Discussion</button>
+                    <button class="btn-action btn-outline" style="border-color:#fdba74; color:#9a3412;" onclick="addResource('${unitCounter}', 'imp-pdf')">📑 Important Questions PDF</button>
                 </div>
 
                 <div class="quiz-area">
@@ -159,6 +163,8 @@
             let labelText = type.charAt(0).toUpperCase() + type.slice(1);
             if(type === 'detailed') labelText = "Detailed Note";
             if(type === 'lecture') labelText = "Lecture Note";
+            if(type === 'imp-discussion') labelText = "Imp. Discussion";
+            if(type === 'imp-pdf') labelText = "Imp. Questions";
             
             const placeholder = type === 'model' ? '' : '';
 
@@ -246,6 +252,12 @@
                         resourcesHTML += `<div class="resource-btn video" onclick="openResource('video', '${rLink}', '${rTitle}')"><span class="icon video-icon">▶️</span><span>${rTitle}</span></div>`;
                     } else if (rType === 'model') {
                         resourcesHTML += `<div class="resource-btn model" onclick="openResource('model', '${rLink}', '${rTitle}')"><span class="icon model-icon">🧊</span><span>${rTitle}</span></div>`;
+                    } else if (rType === 'imp-discussion') {
+                        // FIRE SYMBOL + LIGHT RED BACKGROUND
+                        resourcesHTML += `<div class="resource-btn imp-discussion" onclick="openResource('video', '${rLink}', '${rTitle}')"><span class="icon">🔥</span><span>${rTitle}</span></div>`;
+                    } else if (rType === 'imp-pdf') {
+                        // NOTES ICON + LIGHT ORANGE BACKGROUND
+                        resourcesHTML += `<div class="resource-btn imp-pdf" onclick="openResource('notes', '${rLink}', '${rTitle}')"><span class="icon">📑</span><span>${rTitle}</span></div>`;
                     }
                 });
 
@@ -299,10 +311,17 @@
         .unit-content.active { padding: 24px 12px; max-height: none; }
         .subsection { padding: 20px; background: white; border-radius: 12px; border: 1px solid var(--gray-200); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .resource-btn { display: flex; width: 100%; padding: 14px 18px; margin: 6px 0; background: var(--gray-50); border-radius: 8px; font-weight: 500; border: 1px solid var(--gray-200); cursor: pointer; gap: 12px; transition: 0.2s; align-items: center; }
+        
+        /* EXISTING BUTTON STYLES */
         .resource-btn.notes { background: #f0f9ff; border-color: #bae6fd; color: #085d8c; }
         .resource-btn.video { background: #f5f3ff; border-color: #d8b4fe; color: #5a32a6; }
         .resource-btn.quiz { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
         .resource-btn.model { background: #fdf4ff; border-color: #f0abfc; color: #86198f; }
+
+        /* NEW BUTTON STYLES FOR APP */
+        .resource-btn.imp-discussion { background: #fef2f2; border-color: #fecaca; color: #b91c1c; } /* Light Red Background */
+        .resource-btn.imp-pdf { background: #fff7ed; border-color: #fed7aa; color: #c2410c; } /* Light Orange Background */
+        
         .resource-btn:hover { transform: translateY(-1px); filter: brightness(0.98); }
         .icon { font-size: 1.3rem; min-width: 24px; color: var(--accent); }
         .icon.video-icon { color: #8b5cf6; } .icon.quiz-icon { color: #f59e0b; } .icon.model-icon { color: #d946ef; }
