@@ -31,6 +31,13 @@
         .btn-preview { background: var(--accent); color: white; flex: 1; font-size: 1.2rem; padding: 20px; font-weight: 700; cursor: pointer; border: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; }
         .btn-preview:hover { background: #0ea5e9; transform: translateY(-2px); }
 
+        /* Save/Load Buttons */
+        .project-controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-save { background: #059669; color: white; flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-load { background: #475569; color: white; flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-save:hover { background: #047857; }
+        .btn-load:hover { background: #334155; }
+
         .res-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
         .btn-outline { background: white; border: 1px solid #d1d5db; color: #374151; }
         .btn-outline:hover { background: #f9fafb; border-color: #9ca3af; }
@@ -76,6 +83,13 @@
     <div id="statusMessage"></div>
 
     <h1>Ezi Nurse Course Dashboard</h1>
+
+    <input type="file" id="fileLoader" accept=".json" style="display: none;" onchange="loadProject(this)">
+
+    <div class="project-controls">
+        <button class="btn-save" onclick="saveProject()">💾 SAVE PROJECT</button>
+        <button class="btn-load" onclick="document.getElementById('fileLoader').click()">📂 LOAD PROJECT</button>
+    </div>
 
     <input type="hidden" id="scriptUrl" value="https://script.google.com/macros/s/AKfycby04j5TYB_qCJBCoTZO3AjFRFwdteWcsxJEKCxBooufpLVq5dxWWoh0fLtj6URqMQH6/exec">
 
@@ -228,6 +242,120 @@
         }
 
         function removeUnit(id) { document.getElementById(`unit-${id}`).remove(); }
+
+        // --- SAVE AND LOAD FUNCTIONALITY ---
+
+        function saveProject() {
+            try {
+                const projectData = {
+                    courseName: document.getElementById('courseName').value,
+                    syllabusLink: document.getElementById('syllabusLink').value,
+                    scriptUrl: document.getElementById('scriptUrl').value,
+                    units: []
+                };
+
+                // Iterate over units
+                const unitCards = document.getElementsByClassName('unit-card');
+                Array.from(unitCards).forEach(card => {
+                    const unitObj = {
+                        title: card.querySelector('.u-title').value,
+                        quiz: card.querySelector('.u-quiz-data').value,
+                        resources: []
+                    };
+
+                    // Iterate over resources in this unit
+                    const resRows = card.querySelectorAll('.resource-row');
+                    resRows.forEach(row => {
+                        unitObj.resources.push({
+                            type: row.dataset.type,
+                            title: row.querySelector('.res-title').value,
+                            link: row.querySelector('.res-link').value
+                        });
+                    });
+
+                    projectData.units.push(unitObj);
+                });
+
+                // Create blob and download
+                const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                // Filename includes course name
+                const safeName = projectData.courseName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                a.download = `ezi_nurse_${safeName || 'project'}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showMessage("Project Saved Successfully!", "success");
+
+            } catch (e) {
+                console.error(e);
+                showMessage("Failed to save project.", "error");
+            }
+        }
+
+        function loadProject(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    // 1. Restore Global fields
+                    if(data.courseName) document.getElementById('courseName').value = data.courseName;
+                    if(data.syllabusLink) document.getElementById('syllabusLink').value = data.syllabusLink;
+                    if(data.scriptUrl) document.getElementById('scriptUrl').value = data.scriptUrl;
+
+                    // 2. Clear existing units
+                    const container = document.getElementById('unitsContainer');
+                    container.innerHTML = '';
+                    unitCounter = 0; // Reset counter
+
+                    // 3. Rebuild Units
+                    if (data.units && Array.isArray(data.units)) {
+                        data.units.forEach(unitData => {
+                            addUnit(); // Creates a new empty unit
+                            
+                            // Get the unit we just created (unitCounter is currently at the max)
+                            const unitCard = document.getElementById(`unit-${unitCounter}`);
+                            
+                            // Restore Title and Quiz
+                            unitCard.querySelector('.u-title').value = unitData.title || '';
+                            unitCard.querySelector('.u-quiz-data').value = unitData.quiz || '';
+
+                            // Restore Resources
+                            if (unitData.resources && Array.isArray(unitData.resources)) {
+                                unitData.resources.forEach(res => {
+                                    addResource(unitCounter, res.type); // Add empty resource row
+                                    
+                                    // Get the row we just added (it's the last child of the resource container)
+                                    const resContainer = document.getElementById(`resources-${unitCounter}`);
+                                    const newRow = resContainer.lastElementChild;
+                                    
+                                    newRow.querySelector('.res-title').value = res.title || '';
+                                    newRow.querySelector('.res-link').value = res.link || '';
+                                });
+                            }
+                        });
+                    }
+
+                    showMessage("Project Loaded Successfully!", "success");
+
+                } catch (err) {
+                    console.error(err);
+                    showMessage("Error reading project file. Is it valid JSON?", "error");
+                }
+                
+                // Reset input so same file can be selected again if needed
+                input.value = '';
+            };
+            reader.readAsText(file);
+        }
 
         // --- HELPER: Process URL Input (Handles HTML pastes and Fixes Links) ---
         function processUrlInput(input) {
